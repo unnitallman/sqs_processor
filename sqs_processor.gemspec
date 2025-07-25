@@ -1,11 +1,13 @@
+require_relative 'lib/sqs_processor/version'
+
 Gem::Specification.new do |spec|
   spec.name          = "sqs_processor"
-  spec.version       = "0.1.0"
-  spec.authors       = ["Your Name"]
-  spec.email         = ["your.email@example.com"]
+  spec.version       = SQSProcessor::VERSION
+  spec.authors       = ["Unni Tallman"]
+  spec.email         = ["unni@bigbinary.com"]
   spec.summary       = "A Ruby gem for processing messages from Amazon SQS queues"
   spec.description   = "A comprehensive Ruby gem for processing messages from Amazon SQS queues with configurable message handling, error recovery, and extensible processing logic."
-  spec.homepage      = "https://github.com/yourusername/sqs_processor"
+  spec.homepage      = "https://github.com/unnitallman/sqs_processor"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
 
