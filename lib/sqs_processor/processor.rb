@@ -99,7 +99,7 @@ module SQSProcessor
         logger.info "Message body: #{body}"
 
         # Call the hook method that should be implemented by the host application
-        result = handle_message(body['Message'])
+        result = handle_message(JSON.parse(body['Message']))
 
         if result
           # Delete the message from queue after successful processing
