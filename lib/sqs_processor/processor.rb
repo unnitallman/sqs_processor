@@ -11,20 +11,14 @@ module SQSProcessor
   class Processor
     attr_reader :sqs_client, :queue_url, :logger
 
-    def initialize(queue_url:, region: 'us-east-1', max_messages: 10, visibility_timeout: 30,
-                   aws_access_key_id: nil, aws_secret_access_key: nil, aws_session_token: nil,
-                   aws_credentials: nil, logger: nil)
+    def initialize(queue_url:, aws_access_key_id:, aws_secret_access_key:, aws_region: 'us-east-1',
+                   aws_session_token: nil, max_messages: 10, visibility_timeout: 30, logger: nil)
       @queue_url = queue_url
-      @region = region
       @max_messages = max_messages
       @visibility_timeout = visibility_timeout
-      @aws_credentials = aws_credentials
-      @aws_access_key_id = aws_access_key_id
-      @aws_secret_access_key = aws_secret_access_key
-      @aws_session_token = aws_session_token
 
       setup_logger(logger)
-      setup_sqs_client
+      setup_sqs_client(aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region)
 
       raise 'Queue URL is required.' unless @queue_url
     end
@@ -37,19 +31,10 @@ module SQSProcessor
       end
     end
 
-    def setup_sqs_client
-      credentials = if @aws_credentials
-                      @aws_credentials
-                    elsif @aws_access_key_id && @aws_secret_access_key
-                      Aws::Credentials.new(@aws_access_key_id, @aws_secret_access_key, @aws_session_token)
-                    elsif ENV['DATA_SYNC_AWS_ACCESS_KEY_ID'] && ENV['DATA_SYNC_AWS_SECRET_ACCESS_KEY']
-                      Aws::Credentials.new(ENV['DATA_SYNC_AWS_ACCESS_KEY_ID'], ENV['DATA_SYNC_AWS_SECRET_ACCESS_KEY'])
-                    else
-                      Aws::Credentials.new
-                    end
-
+    def setup_sqs_client(aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region)
+      credentials = Aws::Credentials.new(aws_access_key_id, aws_secret_access_key, aws_session_token)
       @sqs_client = Aws::SQS::Client.new(
-        region: @region,
+        region: aws_region,
         credentials: credentials
       )
     end

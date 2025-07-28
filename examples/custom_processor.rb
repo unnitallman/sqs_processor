@@ -4,9 +4,7 @@ require 'sqs_processor'
 
 # Example custom processor that implements the handle_message hook
 class DataSyncProcessor < SQSProcessor::Processor
-  def handle_message(message, body)
-    logger.info "Processing message #{message.message_id}"
-
+  def handle_message(body)
     case body['event_type']
     when 'user_sync'
       process_user_sync(body)
@@ -71,10 +69,10 @@ if __FILE__ == $0
   # Create and start the processor
   processor = DataSyncProcessor.new(
     queue_url: ENV.fetch('DATA_SYNC_SQS_QUEUE_URL', nil),
-    region: ENV['DATA_SYNC_AWS_REGION'] || 'us-east-1',
     aws_access_key_id: ENV.fetch('DATA_SYNC_AWS_ACCESS_KEY_ID', nil),
     aws_secret_access_key: ENV.fetch('DATA_SYNC_AWS_SECRET_ACCESS_KEY', nil),
-    aws_session_token: ENV.fetch('DATA_SYNC_AWS_SESSION_TOKEN', nil)
+    aws_session_token: ENV.fetch('DATA_SYNC_AWS_SESSION_TOKEN', nil),
+    aws_region: ENV['DATA_SYNC_AWS_REGION'] || 'us-east-1'
   )
   processor.process_messages
 end

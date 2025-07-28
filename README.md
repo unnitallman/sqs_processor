@@ -58,37 +58,7 @@ DATA_SYNC_SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/your-qu
 
 ## Usage
 
-### Command Line Usage
-
-```bash
-sqs_processor [options]
-```
-
-### Command Line Options
-
-```bash
-sqs_processor [options]
-
-Options:
-  -q, --queue-url URL              SQS Queue URL
-  -r, --region REGION              AWS Region
-  -m, --max-messages NUMBER        Max messages per batch (default: 10)
-  -v, --visibility-timeout SECONDS Visibility timeout in seconds (default: 30)
-  -h, --help                       Show this help message
-```
-
-### Examples
-
-```bash
-# Basic usage with environment variables
-sqs_processor
-
-# Specify queue URL and region
-sqs_processor -q https://sqs.us-west-2.amazonaws.com/123456789012/my-queue -r us-west-2
-
-# Custom batch size and visibility timeout
-sqs_processor -m 5 -v 60
-```
+The gem is designed to be used programmatically in your Ruby applications.
 
 ### Programmatic Usage
 
@@ -97,14 +67,14 @@ sqs_processor -m 5 -v 60
 ```ruby
 require 'sqs_processor'
 
-# Create a processor instance
+# Create a processor instance with AWS credentials
 processor = SQSProcessor::Processor.new(
   queue_url: 'https://sqs.us-east-1.amazonaws.com/123456789012/my-queue',
-  region: 'us-east-1',
-  max_messages: 10,
-  visibility_timeout: 30,
   aws_access_key_id: 'your-access-key',
-  aws_secret_access_key: 'your-secret-key'
+  aws_secret_access_key: 'your-secret-key',
+  aws_region: 'us-east-1',
+  max_messages: 10,
+  visibility_timeout: 30
 )
 
 # Start processing messages
@@ -117,8 +87,7 @@ The gem uses a hook-based approach for message processing. You must implement th
 
 ### Hook Method
 
-The `handle_message(message, body)` method receives:
-- `message`: The SQS message object (contains message_id, receipt_handle, etc.)
+The `handle_message(body)` method receives:
 - `body`: The parsed JSON body of the message
 
 Return `true` if processing was successful (message will be deleted from queue), or `false` if processing failed (message will remain in queue for retry).
@@ -141,8 +110,8 @@ To implement custom message processing logic, create a subclass of `SQSProcessor
 require 'sqs_processor'
 
 class MyCustomProcessor < SQSProcessor::Processor
-  def handle_message(message, body)
-    # This method receives the SQS message object and parsed body
+  def handle_message(body)
+    # This method receives the parsed message body
     # Return true if processing was successful, false otherwise
     
     case body['event_type']
@@ -174,9 +143,9 @@ end
 # Usage
 processor = MyCustomProcessor.new(
   queue_url: 'your-queue-url',
-  region: 'us-east-1',
   aws_access_key_id: 'your-access-key',
-  aws_secret_access_key: 'your-secret-key'
+  aws_secret_access_key: 'your-secret-key',
+  aws_region: 'us-east-1'
 )
 processor.process_messages
 ```
@@ -188,13 +157,12 @@ processor.process_messages
 The `SQSProcessor::Processor.new` method accepts the following parameters:
 
 - `queue_url:` (required) - The SQS queue URL
-- `region:` (optional, default: 'us-east-1') - AWS region
+- `aws_access_key_id:` (required) - AWS access key ID
+- `aws_secret_access_key:` (required) - AWS secret access key
+- `aws_region:` (optional, default: 'us-east-1') - AWS region
+- `aws_session_token:` (optional) - AWS session token for temporary credentials
 - `max_messages:` (optional, default: 10) - Maximum messages per batch
 - `visibility_timeout:` (optional, default: 30) - Message visibility timeout in seconds
-- `aws_access_key_id:` (optional) - AWS access key ID
-- `aws_secret_access_key:` (optional) - AWS secret access key
-- `aws_session_token:` (optional) - AWS session token for temporary credentials
-- `aws_credentials:` (optional) - Pre-configured AWS credentials object
 - `logger:` (optional) - Custom logger instance
 
 ### Environment Variables
