@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sqs_processor (0.1.1)
+    sqs_processor (0.1.2)
       aws-sdk-sqs (~> 1.0)
       dotenv (~> 2.0)
       json (~> 2.0)

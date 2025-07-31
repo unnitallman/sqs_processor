@@ -9,7 +9,7 @@ A Ruby gem for processing messages from Amazon SQS queues with configurable mess
 - **Error Handling**: Robust error handling with message retention on failure
 - **Customizable**: Extensible message processing logic
 - **Logging**: Comprehensive logging with configurable levels
-- **Command Line Options**: Flexible configuration via command line arguments
+- **Graceful Shutdown**: Handles SIGTERM, SIGINT, and SIGQUIT signals gracefully
 - **Environment Variables**: Support for AWS credentials and configuration via environment variables
 
 ## Prerequisites
@@ -196,6 +196,22 @@ The script supports multiple ways to provide AWS credentials:
 - **Network Errors**: Automatic retry with exponential backoff
 - **Queue Errors**: Comprehensive error logging with stack traces
 
+## Graceful Shutdown
+
+The processor handles termination signals gracefully:
+
+- **SIGTERM**: Standard termination signal (used by container orchestrators)
+- **SIGINT**: Interrupt signal (Ctrl+C)
+- **SIGQUIT**: Quit signal
+
+When a shutdown signal is received:
+1. The processor stops accepting new messages
+2. Completes processing of any current message batch
+3. Logs the shutdown process
+4. Exits cleanly
+
+This ensures that no messages are lost during deployments or process termination.
+
 ## Monitoring
 
 The script provides detailed logging including:
@@ -212,6 +228,7 @@ The script provides detailed logging including:
 3. **Handle errors gracefully**: Return `false` from processing methods to keep messages in queue
 4. **Monitor queue depth**: Use the built-in queue attribute reporting
 5. **Use appropriate batch sizes**: Balance between throughput and memory usage
+6. **Deploy with graceful shutdown**: The processor handles SIGTERM gracefully for container deployments
 
 ## Troubleshooting
 

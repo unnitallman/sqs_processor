@@ -16,9 +16,11 @@ module SQSProcessor
       @queue_url = queue_url
       @max_messages = max_messages
       @visibility_timeout = visibility_timeout
+      @shutdown_requested = false
 
       setup_logger(logger)
       setup_sqs_client(aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region)
+      setup_signal_handlers
 
       raise 'Queue URL is required.' unless @queue_url
     end
@@ -39,6 +41,23 @@ module SQSProcessor
       )
     end
 
+    def setup_signal_handlers
+      Signal.trap('TERM') do
+        logger.info 'Received SIGTERM, initiating graceful shutdown...'
+        @shutdown_requested = true
+      end
+
+      Signal.trap('INT') do
+        logger.info 'Received SIGINT, initiating graceful shutdown...'
+        @shutdown_requested = true
+      end
+
+      Signal.trap('QUIT') do
+        logger.info 'Received SIGQUIT, initiating graceful shutdown...'
+        @shutdown_requested = true
+      end
+    end
+
     def process_messages
       logger.info 'Starting SQS message processing...'
       logger.info "Queue URL: #{@queue_url}"
@@ -46,6 +65,8 @@ module SQSProcessor
       logger.info "Visibility timeout: #{@visibility_timeout} seconds"
 
       loop do
+        break if @shutdown_requested
+
         receive_messages
         sleep 1 # Small delay between polling cycles
       rescue StandardError => e
@@ -53,6 +74,8 @@ module SQSProcessor
         logger.error e.backtrace.join("\n")
         sleep 5 # Longer delay on error
       end
+
+      logger.info 'Graceful shutdown completed.'
     end
 
     def receive_messages
@@ -71,6 +94,8 @@ module SQSProcessor
       logger.info "Received #{response.messages.length} message(s)"
 
       response.messages.each do |message|
+        break if @shutdown_requested
+
         process_single_message(message)
       end
     end
@@ -133,6 +158,15 @@ module SQSProcessor
       logger.info "  Approximate number of messages delayed: #{attributes['ApproximateNumberOfMessagesDelayed']}"
 
       attributes
+    end
+
+    def shutdown_requested?
+      @shutdown_requested
+    end
+
+    def request_shutdown
+      logger.info 'Shutdown requested manually...'
+      @shutdown_requested = true
     end
   end
 end
