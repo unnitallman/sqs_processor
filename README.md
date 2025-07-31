@@ -205,12 +205,13 @@ The processor handles termination signals gracefully:
 - **SIGQUIT**: Quit signal
 
 When a shutdown signal is received:
-1. The processor stops accepting new messages
-2. Completes processing of any current message batch
-3. Logs the shutdown process
-4. Exits cleanly
+1. The processor immediately interrupts any blocking operations (like SQS polling)
+2. Stops accepting new messages
+3. Completes processing of any current message batch
+4. Logs the shutdown process
+5. Exits cleanly
 
-This ensures that no messages are lost during deployments or process termination.
+**Immediate Response**: Like Puma, the processor responds to shutdown signals immediately, interrupting any blocking operations without waiting for timeouts.
 
 ## Monitoring
 

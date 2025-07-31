@@ -45,16 +45,22 @@ module SQSProcessor
       Signal.trap('TERM') do
         logger.info 'Received SIGTERM, initiating graceful shutdown...'
         @shutdown_requested = true
+        # Immediately interrupt any blocking operations
+        Thread.main.raise Interrupt.new
       end
 
       Signal.trap('INT') do
         logger.info 'Received SIGINT, initiating graceful shutdown...'
         @shutdown_requested = true
+        # Immediately interrupt any blocking operations
+        Thread.main.raise Interrupt.new
       end
 
       Signal.trap('QUIT') do
         logger.info 'Received SIGQUIT, initiating graceful shutdown...'
         @shutdown_requested = true
+        # Immediately interrupt any blocking operations
+        Thread.main.raise Interrupt.new
       end
     end
 
@@ -69,6 +75,10 @@ module SQSProcessor
 
         receive_messages
         sleep 1 # Small delay between polling cycles
+      rescue Interrupt
+        logger.info 'Interrupted, initiating graceful shutdown...'
+        @shutdown_requested = true
+        break
       rescue StandardError => e
         logger.error "Error in message processing loop: #{e.message}"
         logger.error e.backtrace.join("\n")
@@ -98,6 +108,9 @@ module SQSProcessor
 
         process_single_message(message)
       end
+    rescue Interrupt
+      logger.info 'Interrupted during message reception...'
+      raise
     end
 
     def process_single_message(message)
